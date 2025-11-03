@@ -3,13 +3,13 @@ on: push
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: polarbookshop/polar-ui
+  IMAGE_NAME: vkhomagroup/polar-ui
   VERSION: latest
 
 jobs:
   build:
     name: Build and Test
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
       security-events: write
@@ -28,7 +28,7 @@ jobs:
           fail-build: false
           severity-cutoff: high
       - name: Upload vulnerability report
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/codeql-action/upload-sarif@v3
         if: success() || failure()
         with:
           sarif_file: ${{ steps.scan.outputs.sarif }}
@@ -43,7 +43,7 @@ jobs:
     name: Package and Publish
     if: ${{ github.ref == 'refs/heads/main' }}
     needs: [ build ]
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
       packages: write
@@ -60,8 +60,7 @@ jobs:
       - name: Package SPA
         run: |
           pack build ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }} \
-            --buildpack gcr.io/paketo-buildpacks/nginx \
-            --builder paketobuildpacks/builder:base \
+            --builder paketobuildpacks/builder-jammy-base \
             -p dist
       - name: OCI image vulnerability scanning
         uses: anchore/scan-action@v3
@@ -71,7 +70,7 @@ jobs:
           fail-build: false
           severity-cutoff: high
       - name: Upload vulnerability report
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/codeql-action/upload-sarif@v3
         if: success() || failure()
         with:
           sarif_file: ${{ steps.scan.outputs.sarif }}
